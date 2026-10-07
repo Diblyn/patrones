@@ -170,6 +170,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padd
    </div>
    <label class="chk"><input type="checkbox" id="rdiag"> Rejilla en diagonal (fondo torchon)</label>
    <label class="chk"><input type="checkbox" id="rsnap"> Imán a los puntos</label>
+   <label class="chk"><input type="checkbox" id="rfixed"> Formas sobre los puntos (círculo, arco, pétalo, espiral)</label>
    <label class="chk"><input type="checkbox" id="rguides"> Mostrar guías</label>
   </section>
   <section id="secGridM">
@@ -213,6 +214,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padd
   <li><b>Trazo</b>: toca puntos y termina con doble clic, <kbd>Enter</kbd> o el botón Terminar.</li>
   <li><b>Seleccionar</b>: toca un trazo para cambiarle color, grosor, tipo o simetría, o arrástralo.</li>
   <li><b>Pestañas</b>: Mandala usa la rejilla circular. Cuadrado y tiras usa una rejilla de puntos del tamaño que elijas (cuadrado, rectángulo o tira larga). Cada pestaña guarda su propio diseño.</li>
+  <li>En la pestaña de puntos, con <b>Formas sobre los puntos</b> marcado, círculos, arcos, pétalos y espirales pasan por los puntos de la rejilla. Desmarcado, salen curvas libres.</li>
   <li>Zoom: botones + y -, rueda del ratón o dos dedos. "Ajustar" encuadra todo el patrón y el porcentaje vuelve al 100%. Barra espaciadora o herramienta Mano para mover la vista.</li>
   <li><b>Guardar</b> descarga el proyecto (.json) para seguir editándolo. PNG y SVG sirven para imprimir o compartir.</li>
   <li>El diseño se guarda solo en este navegador.</li>
@@ -244,7 +246,7 @@ const TOOLS=[
 ];
 
 const state={
- mode:'mandala',rect:{cols:41,rows:41,step:20,diag:false,snap:true,major:5},
+ mode:'mandala',rect:{cols:41,rows:41,step:20,diag:false,snap:true,fixed:true,major:5},
  strokes:[],sel:null,tool:'arc',
  props:{color:'#d62839',width:6,style:'hilo',n:12,mirror:false,my:false},
  opt:{apertura:180,petalo:110,vueltas:3,suave:true,flip:false},
@@ -352,7 +354,7 @@ function spline(P,closed){
  if(!closed)out.push(P[n-1].slice());
  return out;
 }
-function build(tool,a,b){
+function buildRaw(tool,a,b){
  const o=state.opt;
  switch(tool){
   case'line':if(dist(a,b)<1)return null;return{type:'line',pts:[a,b],closed:false};
@@ -363,6 +365,48 @@ function build(tool,a,b){
  }
  return null;
 }
+function resample(pts,closed,maxSeg){
+ const out=[],n=pts.length,segs=closed?n:n-1;
+ for(let i=0;i<segs;i++){
+  const a=pts[i],b=pts[(i+1)%n],k=Math.max(1,Math.ceil(dist(a,b)/maxSeg));
+  for(let t=0;t<k;t++)out.push([a[0]+(b[0]-a[0])*t/k,a[1]+(b[1]-a[1])*t/k]);
+ }
+ if(!closed)out.push(pts[n-1].slice());
+ return out;
+}
+function fitToLattice(pts,closed){
+ const dense=resample(pts,closed,state.rect.step*.3),L=[];
+ for(const q of dense){const s=rectSnap(q,true),l=L[L.length-1];if(!l||l[0]!==s[0]||l[1]!==s[1])L.push(s)}
+ if(closed&&L.length>1&&L[0][0]===L[L.length-1][0]&&L[0][1]===L[L.length-1][1])L.pop();
+ const st=state.rect.step,diag=state.rect.diag,eq=(a,b)=>Math.abs(a-b)<1e-6;
+ const unit=(a,b)=>{const dx=Math.abs(b[0]-a[0]),dy=Math.abs(b[1]-a[1]);return diag?(eq(dx,st)&&eq(dy,st)):((eq(dx,st)&&eq(dy,0))||(eq(dx,0)&&eq(dy,st)))};
+ if(L.length>3){
+  const m=L.length,K=[];
+  for(let i=0;i<m;i++){
+   if(!closed&&(i===0||i===m-1)){K.push(L[i]);continue}
+   const a=K.length?K[K.length-1]:L[(i-1+m)%m],b=L[i],c=L[(i+1)%m];
+   const dot=(b[0]-a[0])*(c[0]-b[0])+(b[1]-a[1])*(c[1]-b[1]);
+   if(unit(a,b)&&unit(b,c)&&eq(dot,0))continue;
+   K.push(b);
+  }
+  if(K.length>=3)L.splice(0,L.length,...K);
+ }
+ const n=L.length,out=[];
+ const aligned=(a,b,c)=>{const x1=b[0]-a[0],y1=b[1]-a[1],x2=c[0]-b[0],y2=c[1]-b[1];return Math.abs(x1*y2-y1*x2)<1e-6&&x1*x2+y1*y2>0};
+ for(let i=0;i<n;i++){
+  if(!closed&&(i===0||i===n-1)){out.push(L[i]);continue}
+  if(!aligned(L[(i-1+n)%n],L[i],L[(i+1)%n]))out.push(L[i]);
+ }
+ return out.length>=2?out:null;
+}
+function build(tool,a,b){
+ const sh=buildRaw(tool,a,b);
+ if(sh&&state.mode==='rect'&&state.rect.fixed&&['circle','arc','petal','spiral'].includes(tool)){
+  const p=fitToLattice(sh.pts,sh.closed);
+  return p?{...sh,pts:p}:null;
+ }
+ return sh;
+}
 function buildPath(P,closed){
  if(P.length<2)return null;
  const pts=(state.opt.suave&&P.length>=3)?spline(P,closed):P.map(q=>q.slice());
@@ -370,9 +414,9 @@ function buildPath(P,closed){
 }
 
 /* ---------- rejilla e imán ---------- */
-function rectSnap(P){
+function rectSnap(P,force){
  const R=state.rect;
- if(!R.snap)return[P[0],P[1]];
+ if(!R.snap&&!force)return[P[0],P[1]];
  const st=R.step,i0=(R.cols-1)/2,j0=(R.rows-1)/2,fi=P[0]/st+i0,fj=P[1]/st+j0;
  let i=clamp(Math.round(fi),0,R.cols-1),j=clamp(Math.round(fj),0,R.rows-1);
  if(R.diag&&Math.abs((i-i0)+(j-j0))%2===1){
@@ -757,6 +801,7 @@ function initPanel(){
  $('#rdiag').addEventListener('change',e=>{state.rect.diag=e.target.checked;save();draw()});
  $('#rmajor').addEventListener('change',e=>{state.rect.major=parseInt(e.target.value)||0;save();draw()});
  $('#rsnap').addEventListener('change',e=>{state.rect.snap=e.target.checked;save()});
+ $('#rfixed').addEventListener('change',e=>{state.rect.fixed=e.target.checked;save();draw()});
  $('#rguides').addEventListener('change',e=>{state.guides=e.target.checked;syncPanel();save();draw()});
  $('#bDup').addEventListener('click',dup);
  $('#bDel').addEventListener('click',()=>{const s=getSel();if(s){pushUndo();removeStroke(s.id)}});
@@ -775,7 +820,7 @@ function syncPanel(){
  $('#symM').hidden=rect;$('#symR').hidden=!rect;$('#secGridM').hidden=rect;$('#secGridR').hidden=!rect;
  $('#rsym').value=rsymKey();
  $('#rsym').querySelector('option[value=r4]').disabled=R.cols!==R.rows;
- $('#rcols').value=R.cols;$('#rrows').value=R.rows;$('#rdiag').checked=R.diag;$('#rsnap').checked=R.snap;
+ $('#rcols').value=R.cols;$('#rrows').value=R.rows;$('#rdiag').checked=R.diag;$('#rsnap').checked=R.snap;$('#rfixed').checked=R.fixed;
  $('#rmajor').value=String(R.major);$('#rguides').checked=state.guides;$('#rformat').value=presetKey();
  renderSwatches();
 }

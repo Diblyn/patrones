@@ -18,7 +18,7 @@ Página: https://diblyn.github.io/patrones/
 
 ## Publicarlo
 
-1. Sube `index.html` a la raíz del repositorio.
+1. Sube `index.html`, `manifest.json`, `sw.js` y los iconos a la raíz del repositorio.
 2. En Settings, Pages, elige la rama `main` y la carpeta raíz.
 
-Los diseños se guardan en el navegador de cada ordenador. Para pasarlos a otro equipo, o como copia de seguridad, usa "Guardar copia".
+Los diseños se guardan en el navegador de cada ordenador. Para pasarlos a otro equipo, o como copia de seguridad, usa Guardar → Descargar una copia.

@@ -4,6 +4,9 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Diseñador de bolillos</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f766e">
+<link rel="icon" href="icon-192.png">
 <style>
 :root{
  --bg:#eef0f3;--panel:#ffffff;--panel2:#f4f6f8;--line:#d5dae1;--txt:#1d2430;--mut:#5f6b7a;
@@ -31,6 +34,17 @@ input[type=color]{width:34px;height:28px;padding:0;border:1px solid var(--line);
 #top .grp:last-child{border-right:0}
 #top .sp{flex:1}
 #saved{color:var(--mut);font-size:12px}
+#saved.warn{color:var(--warn);font-weight:600}
+#top .chk{margin:0;font-size:13px}
+#undobar{position:absolute;left:10px;bottom:10px;display:flex;gap:4px}
+#undobar button{background:#ffffffee;font-size:20px;line-height:1;padding:4px 12px}
+#undobar button:disabled{opacity:.35}
+.lib{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;max-height:60vh;overflow:auto;padding:4px}
+.card{border:1px solid var(--line);border-radius:8px;padding:6px;cursor:pointer;background:#fff;display:flex;flex-direction:column;gap:4px}
+.card:hover{border-color:var(--acc)}
+.card.on{box-shadow:0 0 0 2px var(--acc)}
+.card canvas{width:100%;aspect-ratio:1;background:#f6f3ea;border-radius:4px}
+.card span{font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* pestañas */
 #tabs{display:flex;gap:3px;padding:5px 10px 0;background:var(--panel2);border-bottom:1px solid var(--line);overflow-x:auto;align-items:flex-end;flex:0 0 auto}
 .tab{display:flex;align-items:center;gap:6px;padding:6px 6px 6px 12px;border:1px solid var(--line);border-bottom:none;border-radius:8px 8px 0 0;background:#e6e9ee;cursor:pointer;white-space:nowrap;flex:0 0 auto;max-width:240px}
@@ -114,12 +128,12 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padd
  <h1>Diseñador de bolillos</h1>
  <div class="grp">
   <button id="bNew" data-menu title="Crear un diseño nuevo en otra pestaña">Nuevo</button>
-  <button id="bOpen" title="Abrir un diseño (.json) o un archivo de Lace (.lc6)">Abrir</button>
-  <button id="bSave" title="Descargar una copia de este diseño">Guardar copia</button>
+  <button id="bOpen" data-menu title="Abrir diseños (.json) o archivos de Lace (.lc6)">Abrir</button>
+  <button id="bSave" data-menu title="Guardar (Ctrl+S)">Guardar</button>
  </div>
  <div class="grp">
-  <button id="bUndo" title="Deshacer (Ctrl+Z)">Deshacer</button>
-  <button id="bRedo" title="Rehacer (Ctrl+Y)">Rehacer</button>
+  <button id="bUndo" title="Deshacer (Ctrl+Z)">↶ Deshacer</button>
+  <button id="bRedo" title="Rehacer (Ctrl+Y)">↷ Rehacer</button>
  </div>
  <div class="grp">
   <button id="bPrint" title="Imprimir el picado a tamaño real en hojas A4 (Ctrl+P)">Imprimir A4</button>
@@ -129,9 +143,12 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padd
   <button id="bClear" data-menu class="danger">Empezar de cero</button>
  </div>
  <span class="sp"></span>
+ <button id="bInstall" hidden title="Instalar como programa en el ordenador. Así los archivos .lc6 se pueden abrir con doble clic.">Instalar en el ordenador</button>
+ <label class="chk" title="Guarda solo cada cambio, sin tener que pulsar Guardar"><input type="checkbox" id="autoSave" checked> Autoguardado</label>
  <span id="saved"></span>
  <button id="bHelp">Ayuda</button>
  <input type="file" id="file" accept=".json,.lc6,.lc5,.lc4,application/json" multiple hidden>
+ <input type="file" id="dirFile" webkitdirectory multiple hidden>
  <input type="file" id="imgFile" accept="image/*" hidden>
 </div>
 <div id="tabs"></div>
@@ -145,6 +162,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padd
    <button id="fClose">Cerrar forma</button>
    <button id="fCancel">Cancelar (Esc)</button>
   </div>
+  <div id="undobar"><button id="uU" title="Deshacer (Ctrl+Z)">↶</button><button id="uR" title="Rehacer (Ctrl+Y)">↷</button></div>
   <div id="zoombar">
    <button id="zOut" title="Alejar (-)">−</button>
    <button id="zPct" title="Volver al 100%">100%</button>
@@ -158,6 +176,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padd
 <div class="menu" id="menu" hidden></div>
 <dialog id="dlgHelp"></dialog>
 <dialog id="dlgPrint"></dialog>
+<dialog id="dlgLib"></dialog>
 <div id="printArea"></div>
 <script>
 (()=>{
@@ -187,7 +206,7 @@ const settings={
  view:'plano',            // plano | hilo
  style:{},                // estilo por herramienta
  sweep:90,inv:false,leafW:4,leafFill:true,ellMode:'centro',ellFill:false,legs:8,smooth:true,dash:'solid',
- pin:2.0,paper:'v',recent:[],motifs:[]
+ pin:2.0,paper:'v',recent:[],motifs:[],autosave:true
 };
 const DEF_STYLE={dot:{c:'#000000',w:3},tally:{c:'#1e6fd9',w:4},rose:{c:'#7b4bc4',w:3},spider:{c:'#d62839',w:3},
  line:{c:'#d62839',w:3},curve:{c:'#d62839',w:3},path:{c:'#1e6fd9',w:3},fan:{c:'#3cb371',w:3},ellipse:{c:'#1e6fd9',w:3},
@@ -201,7 +220,7 @@ function mkGrid(kind,opt={}){
 function mkDoc(kind,name,opt={}){
  const polar=kind==='polar';
  return{id:++docSeq,name,grid:mkGrid(polar?'polar':'straight',opt.grid||{}),
-  sym:polar?{n:8,m:false,f:false}:{n:1,m:false,f:false},
+  sym:polar?{n:8,m:false,f:false,on:false}:{n:1,m:false,f:false},uid:Math.random().toString(36).slice(2,10),
   els:[],layers:[{id:1,name:'Capa 1',vis:true,lock:false,print:true}],cur:1,nid:1,lid:2,
   view:{zoom:1,x:0,y:0},bg:'#f6f3ea',img:null,hist:[],fut:[],fitted:false};
 }
@@ -310,7 +329,7 @@ function gridLabel(P){
 const SYM_ST={none:[1,0,0],mx:[1,1,0],my:[1,0,1],mxy:[1,1,1],r2:[2,0,0],r4:[4,0,0],r4m:[4,1,0]};
 const SYM_ST_NAME={none:'Sin simetría',mx:'Espejo izquierda y derecha',my:'Espejo arriba y abajo',mxy:'Ambos espejos',r2:'Giro de 180°',r4:'Giro de 90°',r4m:'Giro de 90° con espejo'};
 const symKey=s=>{for(const k in SYM_ST){const v=SYM_ST[k];if(v[0]===s.n&&!!v[1]===!!s.m&&!!v[2]===!!s.f)return k}return'none'};
-const curSym=()=>[Math.max(1,D.sym.n|0),D.sym.m?1:0,D.sym.f?1:0];
+const curSym=()=>(D.grid.kind==='polar'&&!D.sym.on)?[1,0,0]:[Math.max(1,D.sym.n|0),D.sym.m?1:0,D.sym.f?1:0];
 function instances(e){const s=e.s||[1,0,0],out=[];for(let k=0;k<s[0];k++)for(let m=0;m<=s[1];m++)for(let f=0;f<=s[2];f++)out.push([k,m,f,s[0]]);return out}
 function xfPt(p,inst){
  const[k,m,f,n]=inst;let x=p[0],y=p[1];
@@ -755,7 +774,7 @@ function restoreState(s){D.els=s.els.slice();D.layers=JSON.parse(s.layers);D.cur
  for(const id of[...sel])if(!D.els.some(e=>e.id===id))sel.delete(id);changed(true)}
 function undo(){if(!D.hist.length)return;D.fut.push(snapState());restoreState(D.hist.pop())}
 function redo(){if(!D.fut.length)return;D.hist.push(snapState());restoreState(D.fut.pop())}
-function updateUndo(){$('#bUndo').disabled=!D.hist.length;$('#bRedo').disabled=!D.fut.length}
+function updateUndo(){const u=!D.hist.length,r=!D.fut.length;$('#bUndo').disabled=$('#uU').disabled=u;$('#bRedo').disabled=$('#uR').disabled=r;$('#uU').title=`Deshacer (Ctrl+Z) · ${D.hist.length} paso${D.hist.length===1?'':'s'}`;$('#uR').title=`Rehacer (Ctrl+Y) · ${D.fut.length} paso${D.fut.length===1?'':'s'}`}
 /* devuelve copias editables de los elementos seleccionados */
 function editSel(ids){
  const set=ids||sel,out=[];
@@ -1164,11 +1183,13 @@ cv.addEventListener('contextmenu',e=>{
 });
 
 addEventListener('keydown',e=>{
- const t=e.target;if(t.tagName==='INPUT'&&t.type!=='range'&&t.type!=='checkbox'||t.tagName==='TEXTAREA'||t.tagName==='SELECT')return;
- if($('#dlgPrint').open||$('#dlgHelp').open)return;
+ const t=e.target,textish=(t.tagName==='INPUT'&&(t.type==='text'||t.type==='number'))||t.tagName==='TEXTAREA';
+ if($('#dlgPrint').open||$('#dlgHelp').open||$('#dlgLib').open)return;
  const k=e.key.toLowerCase(),mod=e.ctrlKey||e.metaKey;
+ if(mod&&textish&&'zycxva'.includes(k))return;
+ if(!mod&&(textish||t.tagName==='SELECT'))return;
  if(mod){
-  const act={z:()=>e.shiftKey?redo():undo(),y:redo,c:copySel,x:cutSel,v:()=>pasteClip(hover),d:dupSel,a:()=>{selectIds(D.els.filter(x=>layerVisible(x)&&!layerLocked(x)).map(x=>x.id),false)},g:()=>e.shiftKey?ungroupSel():groupSel(),s:()=>doSaveFile(),p:openPrint,o:()=>$('#file').click()}[k];
+  const act={z:()=>e.shiftKey?redo():undo(),y:redo,c:copySel,x:cutSel,v:()=>pasteClip(hover),d:dupSel,a:()=>{selectIds(D.els.filter(x=>layerVisible(x)&&!layerLocked(x)).map(x=>x.id),false)},g:()=>e.shiftKey?ungroupSel():groupSel(),s:()=>saveNow(true),p:openPrint,o:()=>$('#file').click()}[k];
   if(act){e.preventDefault();act()}return;
  }
  if(e.altKey)return;
@@ -1275,10 +1296,12 @@ function panelGrid(){
 function panelSym(){
  const s=D.sym;let b;
  if(isPolar()){
-  b=`<div class="row"><label>Ejes</label><div class="seg" id="symN">${AXES.map(n=>`<button data-v="${n}" class="${n===s.n?'on':''}">${n===1?'Sin':n}</button>`).join('')}</div></div>
+  b=chk('symOn','<b>Repetir lo que dibujo alrededor del aro</b>',s.on);
+  if(!s.on)b+='<div class="note">Desactivado: cada trazo se dibuja una sola vez. Márcalo para que se copie en todos los ejes a la vez.</div>';
+  else b+=`<div class="row"><label>Ejes</label><div class="seg" id="symN">${AXES.map(n=>`<button data-v="${n}" class="${n===s.n?'on':''}">${n===1?'Sin':n}</button>`).join('')}</div></div>
   <div class="row"><label>Otro número</label><input type="number" id="symNc" min="1" max="128" value="${s.n}"></div>
   ${chk('symM','Espejo en cada eje',s.m)}`;
-  if(s.n>1&&D.grid.N%s.n!==0)b+=`<div class="warn">Con ${D.grid.N} puntos por vuelta y ${s.n} ejes, las copias no caen sobre los puntos. Usa un número de ejes que divida a ${D.grid.N}.</div>`;
+  if(s.on&&s.n>1&&D.grid.N%s.n!==0)b+=`<div class="warn">Con ${D.grid.N} puntos por vuelta y ${s.n} ejes, las copias no caen sobre los puntos. Usa un número de ejes que divida a ${D.grid.N}.</div>`;
  }else{
   const k=symKey(s);
   b=`<div class="row"><label>Tipo</label><select id="symSt">${Object.keys(SYM_ST).map(x=>opt(x,SYM_ST_NAME[x],k)).join('')}</select></div>`;
@@ -1339,7 +1362,7 @@ function refreshSelInfo(){
  $('#stSel').textContent=sel.size?`${sel.size} elegido${sel.size>1?'s':''}`:'';
  $('#stCount').textContent=`${D.els.length} elementos`;
  const g=D.grid;
- $('#stGrid').textContent=g.kind==='polar'?`Rejilla redonda · ${g.N} por vuelta · ${D.sym.n>1?D.sym.n+' ejes':'sin simetría'}`:`Rejilla recta ${g.angle}° · ${g.cols} × ${g.rows}`;
+ $('#stGrid').textContent=g.kind==='polar'?`Rejilla redonda · ${g.N} por vuelta · ${curSym()[0]>1?'repite en '+curSym()[0]+' ejes':'sin repetir'}`:`Rejilla recta ${g.angle}° · ${g.cols} × ${g.rows}`;
 }
 function swatches(el,colors,cur,fn){if(!el)return;el.innerHTML='';for(const c of colors){const i=document.createElement('i');i.style.background=c;i.title=c;if(cur&&c.toLowerCase()===cur.toLowerCase())i.className='on';i.onclick=()=>fn(c);el.appendChild(i)}}
 function renderSwatches(){
@@ -1382,7 +1405,7 @@ function bindPanel(){
  on('sLayer','change',e=>{const id=+e.target.value;if(!id)return;pushUndo();for(const x of editSel())x.l=id;changed(true)});
  // rejilla
  const G=D.grid,gset=(fn,refit)=>{pushUndo('grid');fn();save();refreshPanels();if(refit)fit();draw()};
- on('gKind','change',e=>gset(()=>{const k=e.target.value;D.grid=mkGrid(k==='polar'?'polar':'straight');D.sym=k==='polar'?{n:8,m:false,f:false}:{n:1,m:false,f:false}},true));
+ on('gKind','change',e=>gset(()=>{const k=e.target.value;D.grid=mkGrid(k==='polar'?'polar':'straight');D.sym=k==='polar'?{n:8,m:false,f:false,on:false}:{n:1,m:false,f:false}},true));
  on('gN','change',e=>gset(()=>{G.N=+e.target.value}));
  on('gNc','change',e=>gset(()=>{G.N=clamp(parseInt(e.target.value)||32,3,720)}));
  on('gRings','change',e=>gset(()=>{G.rings=clamp(parseInt(e.target.value)||20,1,400)},true));
@@ -1401,6 +1424,7 @@ function bindPanel(){
  on('gShow','change',e=>{G.show=e.target.checked;save();draw()});
  on('gFillAll','click',()=>fillDots(null));
  // simetría
+ on('symOn','change',e=>{D.sym.on=e.target.checked;if(D.sym.on&&D.sym.n<2)D.sym.n=8;save();refreshPanels();draw()});
  segBind('symN',v=>{D.sym.n=+v;save();refreshPanels();draw()});
  on('symNc','change',e=>{D.sym.n=clamp(parseInt(e.target.value)||1,1,128);save();refreshPanels();draw()});
  on('symM','change',e=>{D.sym.m=e.target.checked;save();refreshPanels();draw()});
@@ -1519,12 +1543,13 @@ const idb={
  set(k,v){return new Promise(res=>{if(!this.db)return res(false);try{const t=this.db.transaction('kv','readwrite');t.objectStore('kv').put(v,k);t.oncomplete=()=>res(true);t.onerror=()=>res(false)}catch(e){res(false)}})}
 };
 const elJSON=e=>{const o={};for(const k in e)if(k[0]!=='_'&&e[k]!==undefined&&e[k]!==null)o[k]=e[k];return o};
-function docJSON(d){return{id:d.id,name:d.name,grid:d.grid,sym:d.sym,els:d.els.map(elJSON),layers:d.layers,cur:d.cur,nid:d.nid,lid:d.lid,bg:d.bg,img:d.img?{...d.img,move:false}:null,view:d.view}}
+function docJSON(d){return{id:d.id,uid:d.uid,name:d.name,grid:d.grid,sym:d.sym,els:d.els.map(elJSON),layers:d.layers,cur:d.cur,nid:d.nid,lid:d.lid,bg:d.bg,img:d.img?{...d.img,move:false}:null,view:d.view}}
 function docFrom(o){
  const kind=o.grid&&o.grid.kind==='polar'?'polar':'straight';
  const d=mkDoc(kind,String(o.name||'Diseño').slice(0,60));
  Object.assign(d.grid,o.grid||{});d.grid.kind=kind;
- if(o.sym)d.sym={n:Math.max(1,o.sym.n|0||1),m:!!o.sym.m,f:!!o.sym.f};
+ if(o.sym)d.sym={n:Math.max(1,o.sym.n|0||1),m:!!o.sym.m,f:!!o.sym.f,on:!!o.sym.on};
+ if(o.uid)d.uid=String(o.uid);
  if(Array.isArray(o.layers)&&o.layers.length)d.layers=o.layers.map(l=>({id:l.id|0,name:String(l.name||'Capa'),vis:l.vis!==false,lock:!!l.lock,print:l.print!==false}));
  d.cur=d.layers.some(l=>l.id===o.cur)?o.cur:d.layers[0].id;
  d.lid=Math.max(o.lid|0,...d.layers.map(l=>l.id+1));
@@ -1536,22 +1561,67 @@ function docFrom(o){
  if(o.view)d.view={zoom:o.view.zoom||1,x:o.view.x||0,y:o.view.y||0},d.fitted=true;
  return d;
 }
-let saveT=0,saving=false;
-function save(){clearTimeout(saveT);saveT=setTimeout(doSave,700)}
+let saveT=0,dirty=false,lastSaved=null;
+const hhmm=t=>String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');
+/* archivos del ordenador enlazados a cada pestaña (Chrome y Edge) */
+const canFile=!!window.showSaveFilePicker;
+const fileHandles=new Map();
+async function loadHandles(){const all=await idb.get('handles');if(all&&typeof all==='object')for(const k in all)fileHandles.set(k,all[k])}
+async function persistHandles(){const all={};fileHandles.forEach((v,k)=>{if(v&&docs.some(x=>x.uid===k))all[k]=v});await idb.set('handles',all)}
+async function storeHandle(d,h){fileHandles.set(d.uid,h);await persistHandles()}
+function fileData(d){return{app:'bolillos',v:5,doc:docJSON(d)}}
+async function writeLinked(d,interactive){
+ const h=fileHandles.get(d.uid);if(!h)return null;
+ try{
+  let perm=await h.queryPermission({mode:'readwrite'});
+  if(perm!=='granted'&&interactive)perm=await h.requestPermission({mode:'readwrite'});
+  if(perm!=='granted'){d.needPerm=true;return false}
+  const w=await h.createWritable();await w.write(JSON.stringify(fileData(d)));await w.close();
+  d.fileDirty=false;d.needPerm=false;return true;
+ }catch(e){d.needPerm=true;return false}
+}
+function showSaved(){
+ const el=$('#saved');el.classList.remove('warn');
+ const h=fileHandles.get(D.uid);
+ if(D.needPerm&&h){el.textContent='Pulsa Guardar para seguir guardando en '+h.name;el.classList.add('warn');return}
+ if(dirty&&!settings.autosave){el.textContent='Cambios sin guardar';el.classList.add('warn');return}
+ if(!lastSaved){el.textContent='';return}
+ el.textContent=(settings.autosave?'Guardado automáticamente ':'Guardado ')+hhmm(lastSaved)+(h?' en '+h.name:'');
+}
+function save(){
+ dirty=true;if(D)D.fileDirty=true;
+ if(!settings.autosave){showSaved();return}
+ clearTimeout(saveT);saveT=setTimeout(()=>{if(settings.autosave)doSave()},700);
+}
 async function doSave(){
  if(!docs.length)return;
  const data={v:5,cur:docs.indexOf(D),docs:docs.map(docJSON)};
- const ok=await idb.set('project',data);
- const el=$('#saved'),t=new Date();
- if(ok){el.textContent='Guardado automáticamente '+String(t.getHours()).padStart(2,'0')+':'+String(t.getMinutes()).padStart(2,'0');el.style.color=''}
- else{
-  try{localStorage.setItem('bolillos-v5',JSON.stringify(data));el.textContent='Guardado en el navegador';el.style.color=''}
-  catch(e){el.textContent='No se pudo guardar solo. Usa "Guardar copia".';el.style.color='var(--warn)'}
- }
+ let ok=await idb.set('project',data);
+ if(!ok){try{localStorage.setItem('bolillos-v5',JSON.stringify(data));ok=true}catch(e){}}
+ for(const d of docs)if(d.fileDirty&&!d.needPerm&&fileHandles.has(d.uid))await writeLinked(d,false);
+ if(ok){dirty=false;lastSaved=new Date();showSaved()}
+ else{const el=$('#saved');el.textContent='No se pudo guardar solo. Usa Guardar, Descargar una copia.';el.classList.add('warn')}
 }
+/* Guardar ahora (botón y Ctrl+S) */
+async function saveNow(interactive){
+ clearTimeout(saveT);
+ if(fileHandles.has(D.uid))await writeLinked(D,interactive);
+ await doSave();toast(fileHandles.has(D.uid)&&!D.needPerm?'Guardado en '+fileHandles.get(D.uid).name:'Guardado');
+}
+async function linkFile(){
+ if(!canFile){doSaveFile();return}
+ let h;
+ try{h=await window.showSaveFilePicker({suggestedName:fileBase()+'.json',types:[{description:'Diseño de bolillos',accept:{'application/json':['.json']}}]})}catch(e){return}
+ await storeHandle(D,h);D.fileDirty=true;
+ await writeLinked(D,true);await doSave();
+ toast('A partir de ahora se guarda también en '+h.name);
+}
+function unlinkFile(){fileHandles.delete(D.uid);D.needPerm=false;persistHandles();showSaved();toast('Esta pestaña ya no se guarda en el archivo')}
 function saveSettings(){clearTimeout(saveSettings.t);saveSettings.t=setTimeout(()=>idb.set('settings',JSON.parse(JSON.stringify(settings))),500)}
-addEventListener('pagehide',()=>{clearTimeout(saveT);doSave()});
-document.addEventListener('visibilitychange',()=>{if(document.hidden){clearTimeout(saveT);doSave()}});
+addEventListener('pagehide',()=>{if(settings.autosave){clearTimeout(saveT);doSave()}});
+document.addEventListener('visibilitychange',()=>{if(document.hidden&&settings.autosave){clearTimeout(saveT);doSave()}});
+addEventListener('beforeunload',e=>{if(!settings.autosave&&dirty){e.preventDefault();e.returnValue=''}});
+$('#autoSave').addEventListener('change',e=>{settings.autosave=e.target.checked;clearTimeout(saveT);saveSettings();if(settings.autosave){doSave();toast('Autoguardado activado')}else{toast('Autoguardado desactivado: pulsa Guardar o Ctrl+S');showSaved()}e.target.blur()});
 
 /* versión anterior (localStorage 'bolillos-v1') */
 function migrateOld(d){
@@ -1578,7 +1648,7 @@ function migrateOld(d){
 /* =================== archivos =================== */
 function download(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),3000)}
 const fileBase=()=>(D.name||'bolillos').replace(/[^\wáéíóúüñÁÉÍÓÚÜÑ]+/g,'-').replace(/^-|-$/g,'')||'bolillos';
-function doSaveFile(){download(new Blob([JSON.stringify({app:'bolillos',v:5,doc:docJSON(D),motifs:[]})],{type:'application/json'}),fileBase()+'.json');toast('Copia descargada')}
+function doSaveFile(){download(new Blob([JSON.stringify(fileData(D))],{type:'application/json'}),fileBase()+'.json');toast('Copia descargada')}
 async function openFiles(files){
  let last=null;
  for(const f of files){
@@ -1586,7 +1656,7 @@ async function openFiles(files){
    const name=f.name.replace(/\.[^.]+$/,'');
    if(/\.lc\d$/i.test(f.name)){const d=importLC(await f.arrayBuffer(),name);docs.push(d);last=d;continue}
    const o=JSON.parse(await f.text());
-   if(o.doc){const d=docFrom(o.doc);d.name=uniqueName(d.name||name);d.fitted=false;docs.push(d);last=d}
+   if(o.doc){const d=docFrom(o.doc);if(docs.some(x=>x.uid===d.uid))d.uid=Math.random().toString(36).slice(2,10);d.name=uniqueName(d.name||name);d.fitted=false;docs.push(d);last=d}
    else if(Array.isArray(o.docs)&&o.docs[0]&&o.docs[0].els){for(const x of o.docs){const d=docFrom(x);d.name=uniqueName(d.name);d.fitted=false;docs.push(d);last=d}}
    else{const ds=migrateOld(o);for(const d of ds){d.name=uniqueName(name);docs.push(d);last=d}}
   }catch(err){alert(`No se pudo abrir «${f.name}»: ${err.message}`)}
@@ -1610,7 +1680,7 @@ document.addEventListener('dragover',e=>e.preventDefault());
 document.addEventListener('drop',e=>{e.preventDefault();const f=[...(e.dataTransfer.files||[])];const im=f.find(x=>x.type.startsWith('image/'));if(im&&f.length===1){const dt=new DataTransfer();dt.items.add(im);$('#imgFile').files=dt.files;$('#imgFile').dispatchEvent(new Event('change'));return}if(f.length)openFiles(f)});
 
 /* =================== importar Lace (.lc6) =================== */
-function importLC(buf,name){
+function importLC(buf,name,quiet){
  const d8=new Uint8Array(buf),dv=new DataView(buf),recs=[];
  for(let n=0;(n+1)*54<=d8.length;n++){
   const o=n*54;if(d8[o+53]!==0x0a||d8[o]<1||d8[o]>12)break;
@@ -1641,7 +1711,7 @@ function importLC(buf,name){
  let cx=(x0+x1)/2,cy=(y0+y1)/2;
  if(dots.length){let bd=1e18,bp=null;for(const r of dots){const dd=(r.v[0]-cx)**2+(r.v[1]-cy)**2;if(dd<bd){bd=dd;bp=r.v}}cx=bp[0];cy=bp[1]}
  const T=(x,y)=>[r2((x-cx)*k),r2((y-cy)*k)];
- const d=mkDoc('straight',uniqueName(name));
+ const d=mkDoc('straight',quiet?name:uniqueName(name));
  const L=ang===90?{ax:U,ay:U}:{ax:U*Math.cos(ang*Math.PI/180),ay:U*Math.sin(ang*Math.PI/180)};
  d.grid.angle=ang;
  d.grid.cols=odd(2*Math.ceil(Math.max(Math.abs(x0-cx),Math.abs(x1-cx))*k/L.ax)+3);
@@ -1663,9 +1733,60 @@ function importLC(buf,name){
    default:skipped++;
   }
  }
- if(skipped)setTimeout(()=>toast(`${skipped} elementos de tipo desconocido no se han importado`),300);
+ if(skipped&&!quiet)setTimeout(()=>toast(`${skipped} elementos de tipo desconocido no se han importado`),300);
  return d;
 }
+
+/* =================== carpeta de diseños (miniaturas) =================== */
+function thumb(d,cnv){
+ const c=cnv.getContext('2d'),S=cnv.width;c.fillStyle='#f6f3ea';c.fillRect(0,0,S,S);
+ let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+ for(const e of d.els){const b=geom(e).bb;x0=Math.min(x0,b.x0);y0=Math.min(y0,b.y0);x1=Math.max(x1,b.x1);y1=Math.max(y1,b.y1)}
+ if(x0>x1)return;
+ const k=S*.92/Math.max(x1-x0,y1-y0);
+ c.setTransform(k,0,0,k,S/2-(x0+x1)/2*k,S/2-(y0+y1)/2*k);
+ const o={px:k};
+ for(const L of d.layers)if(L.vis&&L.print)for(const e of d.els)if(e.l===L.id){if(e.t==='dot'&&e.w<2)continue;drawEl(c,e,o)}
+ c.setTransform(1,0,0,1,0,0);
+}
+let libFiles=[];
+$('#dirFile').addEventListener('change',async e=>{
+ const all=[...e.target.files];e.target.value='';
+ libFiles=all.filter(f=>/\.(lc\d|json)$/i.test(f.name)).sort((a,b)=>a.name.localeCompare(b.name,'es',{numeric:true}));
+ const dl=$('#dlgLib'),folder=all[0]&&all[0].webkitRelativePath?all[0].webkitRelativePath.split('/')[0]:'';
+ dl.innerHTML=`<h2>Diseños de la carpeta ${esc(folder)}</h2>
+ <div class="note">${libFiles.length?`${libFiles.length} diseños. Toca uno para abrirlo, o marca varios y pulsa "Abrir los marcados".`:'No hay archivos .lc6 ni .json en esta carpeta.'}</div>
+ <div class="row"><label>Buscar</label><input type="text" id="libQ" placeholder="Nombre…" style="flex:1"></div>
+ <div class="lib" id="libGrid"></div>
+ <div class="btns" style="justify-content:flex-end;margin-top:10px"><button id="libClose">Cerrar</button><button id="libOpen" class="on" disabled>Abrir los marcados</button></div>`;
+ const grid=$('#libGrid'),picked=new Set();
+ const upd=()=>{$('#libOpen').disabled=!picked.size;$('#libOpen').textContent=picked.size?`Abrir los marcados (${picked.size})`:'Abrir los marcados'};
+ libFiles.forEach((f,i)=>{
+  const card=document.createElement('div');card.className='card';card.dataset.n=f.name.toLowerCase();
+  card.innerHTML=`<canvas width="300" height="300"></canvas><label class="chk" style="margin:0"><input type="checkbox"> <span>${esc(f.name.replace(/\.[^.]+$/,''))}</span></label>`;
+  const cb=card.querySelector('input');
+  cb.onclick=ev=>{ev.stopPropagation();cb.checked?picked.add(i):picked.delete(i);card.classList.toggle('on',cb.checked);upd()};
+  card.querySelector('label').onclick=ev=>ev.stopPropagation();
+  card.onclick=()=>{dl.close();openFiles([f])};
+  grid.appendChild(card);
+ });
+ $('#libQ').oninput=ev=>{const q=ev.target.value.toLowerCase();grid.querySelectorAll('.card').forEach(c=>c.hidden=q&&!c.dataset.n.includes(q))};
+ $('#libClose').onclick=()=>dl.close();
+ $('#libOpen').onclick=()=>{dl.close();openFiles([...picked].map(i=>libFiles[i]))};
+ dl.showModal();
+ // miniaturas poco a poco, para no bloquear la ventana
+ const cards=[...grid.children];
+ for(let i=0;i<libFiles.length;i++){
+  if(!dl.open)break;
+  try{
+   const f=libFiles[i];let d;
+   if(/\.lc\d$/i.test(f.name))d=importLC(await f.arrayBuffer(),f.name,true);
+   else{const o=JSON.parse(await f.text());d=o.doc?docFrom(o.doc):null}
+   if(d)thumb(d,cards[i].querySelector('canvas'));
+  }catch(err){const c=cards[i].querySelector('canvas').getContext('2d');c.fillStyle='#b91c1c';c.font='24px sans-serif';c.fillText('No se puede leer',20,150)}
+  await new Promise(r=>setTimeout(r,0));
+ }
+});
 
 /* =================== exportar =================== */
 function svgOfEl(e,o){
@@ -1812,8 +1933,10 @@ function openHelp(){
  <h3>Lo básico</h3><ul>
  <li>Cada pestaña es un diseño. Con <b>+ Nuevo</b> eliges rejilla redonda (mandala) o recta (cuadrícula, torchon, tira).</li>
  <li>Elige una herramienta a la izquierda y dibuja sobre la rejilla. El imán coloca cada punta sobre un alfiler. Mantén <kbd>Alt</kbd> para dibujar libre.</li>
- <li>En mandalas, lo que dibujas se repite en todos los <b>ejes</b> (4, 8, 16, 32…). Con <b>Espejo</b> también se refleja.</li>
- <li>Todo se guarda solo en este ordenador. Usa <b>Guardar copia</b> de vez en cuando por seguridad.</li></ul>
+ <li>En mandalas, cada trazo se dibuja una sola vez. Si marcas <b>Repetir lo que dibujo alrededor del aro</b> (panel Simetría), se copia en todos los <b>ejes</b> (4, 8, 16, 32…), y con <b>Espejo</b> también se refleja. Para repetir algo ya dibujado: elígelo y pulsa <b>Repetir alrededor</b>.</li>
+ <li><b>Autoguardado</b> (arriba a la derecha): con la casilla marcada, cada cambio se guarda solo en este ordenador. Si la desmarcas, guarda tú con <b>Guardar</b> o <kbd>Ctrl+S</kbd>.</li>
+ <li><b>Guardar → Guardar también en un archivo</b>: elige un archivo de tu ordenador y la pestaña se guardará ahí sola, como en un programa normal. <b>Descargar una copia</b> sirve para llevarlo a otro ordenador.</li>
+ <li>Para deshacer usa las flechas ↶ ↷ (abajo a la izquierda y arriba) o <kbd>Ctrl+Z</kbd> varias veces.</li></ul>
  <h3>Herramientas</h3><ul>
  <li><b>Punto</b>: toca para poner un alfiler, o arrastra para poner muchos seguidos. <b>Rellenar puntos</b>: arrastra un rectángulo; con <kbd>Mayús</kbd> los borra.</li>
  <li><b>Gimp recto</b>, <b>Gimp curvo</b> (luego tira del tirador naranja), <b>Gimp suave</b> (por varios puntos), <b>Abanico</b> (arco de 90° o 180°, <kbd>I</kbd> invierte el lado), <b>Círculo</b>, <b>Hoja</b>, <b>Tally</b>, <b>Roseground</b>, <b>Araña</b>, <b>Texto</b> y <b>Flecha</b>.</li>
@@ -1826,20 +1949,29 @@ function openHelp(){
  <li><b>Imprimir A4</b> saca el picado a tamaño real según la distancia entre alfileres. Si no cabe, lo reparte en varias hojas con solape y marcas para pegarlas.</li>
  <li>En la ventana de impresión elige escala 100 %. Comprueba la regla de 5 cm.</li></ul>
  <h3>Archivos de Lace</h3><ul>
- <li><b>Abrir</b> acepta archivos <b>.lc6</b> de Lace 2000: puntos, gimps, abanicos, líneas guía y textos. Se abren en una pestaña nueva con sus colores y grosores.</li></ul>
+ <li><b>Abrir</b> acepta archivos <b>.lc6</b> de Lace 2000: puntos, gimps, abanicos, líneas guía y textos. Se abren en una pestaña nueva con sus colores y grosores. También puedes arrastrarlos a la ventana.</li>
+ <li><b>Abrir → Ver una carpeta de diseños de Lace</b> muestra en miniatura todos los diseños de una carpeta. Toca uno para abrirlo.</li>
+ <li><b>Instalar en el ordenador</b> (botón arriba, en Chrome o Edge) lo convierte en un programa. Después, en Windows, clic derecho sobre un .lc6 → Abrir con → Diseñador de bolillos, y marca "usar siempre" para abrirlos con doble clic.</li></ul>
  <h3>Atajos de teclado</h3>
  <div class="note" style="columns:2;font-size:13px;color:var(--txt)">
  <kbd>V</kbd> Elegir · <kbd>H</kbd> Mover vista<br><kbd>P</kbd> Punto · <kbd>B</kbd> Rellenar<br><kbd>G</kbd> Gimp recto · <kbd>C</kbd> Curvo<br><kbd>S</kbd> Suave · <kbd>F</kbd> Abanico<br><kbd>O</kbd> Círculo · <kbd>L</kbd> Hoja<br><kbd>K</kbd> Tally · <kbd>R</kbd> Roseground<br><kbd>A</kbd> Araña · <kbd>X</kbd> Texto<br><kbd>W</kbd> Flecha · <kbd>E</kbd> Borrador<br>
- <kbd>Ctrl+Z</kbd> Deshacer · <kbd>Ctrl+Y</kbd> Rehacer<br><kbd>Ctrl+C</kbd>/<kbd>V</kbd>/<kbd>X</kbd> Copiar, pegar, cortar<br><kbd>Ctrl+D</kbd> Duplicar · <kbd>Supr</kbd> Borrar<br><kbd>Ctrl+A</kbd> Elegir todo · <kbd>Ctrl+G</kbd> Agrupar<br><kbd>M</kbd> Voltear · <kbd>R</kbd> Girar 90° (con Elegir)<br><kbd>Flechas</kbd> Mover un punto · <kbd>Mayús</kbd> 5<br><kbd>+</kbd>/<kbd>−</kbd> Zoom · <kbd>0</kbd> Ver todo<br><kbd>Ctrl+P</kbd> Imprimir · <kbd>Ctrl+S</kbd> Guardar copia</div>
+ <kbd>Ctrl+Z</kbd> Deshacer · <kbd>Ctrl+Y</kbd> Rehacer<br><kbd>Ctrl+C</kbd>/<kbd>V</kbd>/<kbd>X</kbd> Copiar, pegar, cortar<br><kbd>Ctrl+D</kbd> Duplicar · <kbd>Supr</kbd> Borrar<br><kbd>Ctrl+A</kbd> Elegir todo · <kbd>Ctrl+G</kbd> Agrupar<br><kbd>M</kbd> Voltear · <kbd>R</kbd> Girar 90° (con Elegir)<br><kbd>Flechas</kbd> Mover un punto · <kbd>Mayús</kbd> 5<br><kbd>+</kbd>/<kbd>−</kbd> Zoom · <kbd>0</kbd> Ver todo<br><kbd>Ctrl+P</kbd> Imprimir · <kbd>Ctrl+S</kbd> Guardar</div>
  <div class="btns" style="justify-content:flex-end"><button id="hClose" class="on">Entendido</button></div>`;
  $('#hClose').onclick=()=>d.close();d.showModal();
 }
 
 /* =================== botones superiores y arranque =================== */
 $('#bNew').onclick=()=>showMenu($('#bNew'),newMenu());
-$('#bOpen').onclick=()=>$('#file').click();
-$('#bSave').onclick=doSaveFile;
-$('#bUndo').onclick=undo;$('#bRedo').onclick=redo;
+$('#bOpen').onclick=()=>showMenu($('#bOpen'),[['Abrir archivos (.json o .lc6 de Lace)…',()=>$('#file').click()],['Ver una carpeta de diseños de Lace…',()=>$('#dirFile').click()]]);
+$('#bSave').onclick=()=>{
+ const h=fileHandles.get(D.uid),items=[['Guardar ahora (Ctrl+S)',()=>saveNow(true)]];
+ if(canFile)items.push([h?`Guardar en otro archivo… (ahora: ${h.name})`:'Guardar también en un archivo del ordenador…',linkFile]);
+ if(h)items.push(['Dejar de guardar en '+h.name,unlinkFile]);
+ items.push(0,['Descargar una copia (.json)',doSaveFile]);
+ showMenu($('#bSave'),items);
+};
+$('#bUndo').onclick=$('#uU').onclick=undo;$('#bRedo').onclick=$('#uR').onclick=redo;
+document.addEventListener('change',e=>{const t=e.target;if(t.closest&&t.closest('#panel')&&(t.tagName==='SELECT'||t.type==='color'))t.blur()});
 $('#bPrint').onclick=openPrint;
 $('#bExport').onclick=()=>showMenu($('#bExport'),[['Imagen PNG',()=>exportPNG(false)],['Imagen PNG sin fondo',()=>exportPNG(true)],['SVG a tamaño real (para otros programas)',exportSVG]]);
 $('#bClear').onclick=()=>showMenu($('#bClear'),[
@@ -1855,6 +1987,7 @@ function startFresh(){docs=[mkDoc('polar','Mandala 1'),mkDoc('straight','Patrón
 async function boot(){
  buildTools();
  await idb.open();
+ await loadHandles();
  const st=await idb.get('settings');if(st&&typeof st==='object'){Object.assign(settings,st);if(!Array.isArray(settings.motifs))settings.motifs=[];if(!Array.isArray(settings.recent))settings.recent=[]}
  let data=await idb.get('project');
  if(!data){try{data=JSON.parse(localStorage.getItem('bolillos-v5')||'null')}catch(e){}}
@@ -1865,11 +1998,19 @@ async function boot(){
   if(mig.length){docs=mig;D=null;switchTo(docs[0]);setTimeout(()=>toast('Se han recuperado tus diseños de la versión anterior'),400)}
   else startFresh();
  }
+ $('#autoSave').checked=settings.autosave!==false;settings.autosave=$('#autoSave').checked;
  setTool('select');
  new ResizeObserver(resize).observe(stage);resize();
+ // programa instalado: abrir archivos con doble clic desde Windows
+ if('launchQueue' in window)window.launchQueue.setConsumer(async p=>{if(p.files&&p.files.length){const fs=await Promise.all(p.files.map(h=>h.getFile()));openFiles(fs)}});
+ if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
  let seen=false;try{seen=localStorage.getItem('bolillos-ayuda2')==='1';localStorage.setItem('bolillos-ayuda2','1')}catch(e){}
  if(!seen)setTimeout(openHelp,300);
 }
+let installEv=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEv=e;$('#bInstall').hidden=false});
+addEventListener('appinstalled',()=>{$('#bInstall').hidden=true;toast('Instalado. Ya puedes abrir los .lc6 con "Abrir con"')});
+$('#bInstall').onclick=async()=>{if(!installEv)return;installEv.prompt();await installEv.userChoice;installEv=null;$('#bInstall').hidden=true};
 boot();
 
 })();

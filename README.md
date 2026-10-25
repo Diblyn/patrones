@@ -11,9 +11,10 @@ Página: https://diblyn.github.io/patrones/
 * Herramientas al estilo de Lace: punto, rellenar puntos, gimp recto, gimp curvo, gimp suave, abanico, círculo y elipse, hoja, tally, roseground, araña, texto y flecha.
 * Elegir, mover, copiar, pegar, voltear, copia en espejo, girar, repetir alrededor, convertir líneas en puntos y rellenar puntos dentro de un círculo.
 * Capas, motivos reutilizables, imagen de fondo para calcar y colores de hilo.
-* Abre archivos `.lc6` de Lace 2000.
+* Abre archivos `.lc6` de Lace 2000, uno a uno o viendo en miniatura toda una carpeta.
+* Se puede instalar como programa (Chrome o Edge) para abrir los `.lc6` con doble clic.
 * Imprime en A4 a tamaño real según la distancia entre alfileres. Si el diseño no cabe, lo reparte en varias hojas con solape.
-* Varias pestañas abiertas a la vez y guardado automático en el navegador.
+* Varias pestañas abiertas a la vez, autoguardado (se puede desactivar) y opción de guardar cada diseño en un archivo del ordenador.
 
 ## Publicarlo
 

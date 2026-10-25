@@ -1,0 +1,55 @@
+{
+ "name": "Diseñador de bolillos",
+ "short_name": "Bolillos",
+ "description": "Diseño de picados de encaje de bolillos",
+ "lang": "es",
+ "start_url": "./",
+ "scope": "./",
+ "display": "standalone",
+ "background_color": "#eef0f3",
+ "theme_color": "#0f766e",
+ "icons": [
+  {
+   "src": "icon-192.png",
+   "sizes": "192x192",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png"
+  },
+  {
+   "src": "icon-512.png",
+   "sizes": "512x512",
+   "type": "image/png",
+   "purpose": "maskable"
+  }
+ ],
+ "file_handlers": [
+  {
+   "action": "./",
+   "name": "Diseño de bolillos",
+   "accept": {
+    "application/x-lace": [
+     ".lc6",
+     ".lc5",
+     ".lc4"
+    ],
+    "application/json": [
+     ".json"
+    ]
+   },
+   "icons": [
+    {
+     "src": "icon-192.png",
+     "sizes": "192x192",
+     "type": "image/png"
+    }
+   ]
+  }
+ ],
+ "launch_handler": {
+  "client_mode": "focus-existing"
+ }
+}

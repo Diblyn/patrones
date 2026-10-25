@@ -29,7 +29,7 @@ input[type=checkbox]{accent-color:var(--acc);width:16px;height:16px;margin:0}
 input[type=color]{width:34px;height:28px;padding:0;border:1px solid var(--line);border-radius:6px;background:none;cursor:pointer}
 /* barra superior */
 #top{display:flex;align-items:center;gap:6px;padding:6px 10px;background:var(--panel);border-bottom:1px solid var(--line);flex-wrap:wrap}
-#top h1{font-size:15px;margin:0 8px 0 0;font-weight:650;letter-spacing:.01em}
+#top h1{font-size:15px;margin:0 4px 0 0;font-weight:650;letter-spacing:.01em}
 #top .grp{display:flex;gap:4px;padding-right:8px;margin-right:2px;border-right:1px solid var(--line)}
 #top .grp:last-child{border-right:0}
 #top .sp{flex:1}
@@ -63,7 +63,27 @@ main{flex:1;min-height:0;display:grid;grid-template-columns:auto 1fr 318px}
 #stage{position:relative;min-width:0;min-height:0;overflow:hidden;background:#cfd5dc}
 #cv{position:absolute;left:0;top:0;display:block;touch-action:none}
 .chip{position:absolute;background:#1d2430e0;color:#fff;border-radius:7px;padding:5px 9px;font-size:12px;pointer-events:none}
-#hint{left:10px;top:10px;max-width:70%}
+#hint{left:10px;top:10px;max-width:70%;font-size:14px;padding:7px 11px}
+#tip{position:fixed;z-index:200;max-width:330px;background:#1d2430;color:#fff;font-size:15px;line-height:1.4;padding:9px 12px;border-radius:9px;pointer-events:none;box-shadow:0 6px 20px #0004}
+.q{display:inline-grid;place-items:center;width:19px;height:19px;border-radius:50%;background:#0f766e;color:#fff;font-size:12px;font-weight:700;cursor:help;margin-left:6px;vertical-align:middle;flex:0 0 auto;text-transform:none;letter-spacing:0}
+#panel summary{align-items:center}
+#panel summary .q{margin-right:auto}
+#bGuide{background:#f59e0b;border-color:#d97706;color:#1d2430;font-weight:650}
+#bGuide:hover{background:#fbbf24}
+#dlgGuide{max-width:700px;font-size:18px;line-height:1.5;padding:22px 28px}
+#dlgGuide h2{font-size:24px;margin:2px 0 12px}
+.gstep{color:var(--mut);font-size:14px}
+.gtext{min-height:150px}
+.look{display:inline-block;background:#fff;border:1px solid var(--line);border-radius:7px;padding:1px 9px;font-size:16px;box-shadow:0 1px 2px #0002;white-space:nowrap}
+.gdots{display:flex;gap:6px;justify-content:center;margin:16px 0 10px}
+.gdots i{width:11px;height:11px;border-radius:50%;background:#cfd5dc;cursor:pointer}
+.gdots i.on{background:var(--acc)}
+.gbtns{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.gbtns button{font-size:16px;padding:8px 14px}
+.glink{background:none;border:0;color:var(--acc);text-decoration:underline;font-size:15px;padding:0}
+.pointer{position:fixed;z-index:150;border:4px solid #f59e0b;border-radius:12px;pointer-events:none;animation:pulse 1s ease-in-out infinite;box-shadow:0 0 0 4000px #0002}
+@keyframes pulse{50%{border-color:#dc2626;transform:scale(1.03)}}
+.gback{position:fixed;z-index:160;left:50%;top:14px;transform:translateX(-50%);font-size:17px;padding:8px 18px;background:#f59e0b;border-color:#d97706;font-weight:650}
 #zoombar{position:absolute;right:10px;bottom:10px;display:flex;gap:4px}
 #zoombar button{background:#ffffffee}
 #finish{position:absolute;left:50%;bottom:12px;transform:translateX(-50%);display:flex;gap:6px}
@@ -126,6 +146,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padd
 <body>
 <div id="top">
  <h1>Diseñador de bolillos</h1>
+ <button id="bGuide" title="Una guía fácil, paso a paso, para aprender a usar el programa">? Cómo funciona</button>
  <div class="grp">
   <button id="bNew" data-menu title="Crear un diseño nuevo en otra pestaña">Nuevo</button>
   <button id="bOpen" data-menu title="Abrir diseños (.json) o archivos de Lace (.lc6)">Abrir</button>
@@ -137,16 +158,15 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padd
  </div>
  <div class="grp">
   <button id="bPrint" title="Imprimir el picado a tamaño real en hojas A4 (Ctrl+P)">Imprimir A4</button>
-  <button id="bExport" data-menu>Exportar</button>
+  <button id="bExport" data-menu title="Sacar el dibujo como imagen (PNG) o como SVG para otros programas">Exportar</button>
  </div>
  <div class="grp">
-  <button id="bClear" data-menu class="danger">Empezar de cero</button>
+  <button id="bClear" data-menu class="danger" title="Borrar el dibujo de esta pestaña, o todos los diseños">Empezar de cero</button>
  </div>
  <span class="sp"></span>
  <button id="bInstall" hidden title="Instalar como programa en el ordenador. Así los archivos .lc6 se pueden abrir con doble clic.">Instalar en el ordenador</button>
- <label class="chk" title="Guarda solo cada cambio, sin tener que pulsar Guardar"><input type="checkbox" id="autoSave" checked> Autoguardado</label>
+ <label class="chk"><input type="checkbox" id="autoSave" checked> Autoguardado</label>
  <span id="saved"></span>
- <button id="bHelp">Ayuda</button>
  <input type="file" id="file" accept=".json,.lc6,.lc5,.lc4,application/json" multiple hidden>
  <input type="file" id="dirFile" webkitdirectory multiple hidden>
  <input type="file" id="imgFile" accept="image/*" hidden>
@@ -165,8 +185,8 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padd
   <div id="undobar"><button id="uU" title="Deshacer (Ctrl+Z)">↶</button><button id="uR" title="Rehacer (Ctrl+Y)">↷</button></div>
   <div id="zoombar">
    <button id="zOut" title="Alejar (-)">−</button>
-   <button id="zPct" title="Volver al 100%">100%</button>
-   <button id="zFit" title="Ver todo el patrón (0)">Ajustar</button>
+   <button id="zPct" title="Tamaño real aproximado en la pantalla">100%</button>
+   <button id="zFit" title="Ver todo el dibujo en la pantalla (tecla 0)">Ajustar</button>
    <button id="zIn" title="Acercar (+)">+</button>
   </div>
  </div>
@@ -177,6 +197,7 @@ kbd{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padd
 <dialog id="dlgHelp"></dialog>
 <dialog id="dlgPrint"></dialog>
 <dialog id="dlgLib"></dialog>
+<dialog id="dlgGuide"></dialog>
 <div id="printArea"></div>
 <script>
 (()=>{
@@ -979,7 +1000,7 @@ function buildTools(){
  const nav=$('#tools');nav.innerHTML='';
  for(const t of TOOLS){
   if(t.sep){const s=document.createElement('div');s.className='sep';nav.appendChild(s);continue}
-  const b=document.createElement('button');b.id='t_'+t.id;b.title=`${t.n} (${t.k.toUpperCase()})`;
+  const b=document.createElement('button');b.id='t_'+t.id;b.title=`${t.n}: ${t.h} (Tecla ${t.k.toUpperCase()})`;
   b.innerHTML=`<svg viewBox="0 0 24 24">${ICON[t.id]}</svg><span>${t.n}</span>`;b.onclick=()=>setTool(t.id);nav.appendChild(b);
  }
 }
@@ -1184,7 +1205,7 @@ cv.addEventListener('contextmenu',e=>{
 
 addEventListener('keydown',e=>{
  const t=e.target,textish=(t.tagName==='INPUT'&&(t.type==='text'||t.type==='number'))||t.tagName==='TEXTAREA';
- if($('#dlgPrint').open||$('#dlgHelp').open||$('#dlgLib').open)return;
+ if($('#dlgPrint').open||$('#dlgHelp').open||$('#dlgLib').open||$('#dlgGuide').open)return;
  const k=e.key.toLowerCase(),mod=e.ctrlKey||e.metaKey;
  if(mod&&textish&&'zycxva'.includes(k))return;
  if(!mod&&(textish||t.tagName==='SELECT'))return;
@@ -1356,7 +1377,7 @@ function refreshPanels(){
  const html=panelEstilo()+panelSel()+panelGrid()+panelSym()+panelLayers()+panelColors()+panelImg()+panelMotifs()+panelView();
  const pn=$('#panel'),st=pn.scrollTop;
  pn.innerHTML=html;pn.scrollTop=st;
- bindPanel();refreshSelInfo();renderSwatches();
+ bindPanel();refreshSelInfo();renderSwatches();addTips();
 }
 function refreshSelInfo(){
  $('#stSel').textContent=sel.size?`${sel.size} elegido${sel.size>1?'s':''}`:'';
@@ -1535,6 +1556,146 @@ function showMenu(anchor,items){const r=anchor.getBoundingClientRect();showMenuA
 const hideMenu=()=>{$('#menu').hidden=true};
 document.addEventListener('pointerdown',e=>{if(!e.target.closest('#menu')&&!e.target.closest('[data-menu]'))hideMenu()});
 
+/* =================== ayudas al pasar el ratón =================== */
+const tipEl=document.createElement('div');tipEl.id='tip';tipEl.hidden=true;document.body.appendChild(tipEl);
+let tipT=0,tipFor=null;
+function tipText(el){
+ if(el.hasAttribute('title')){const t=el.getAttribute('title');el.removeAttribute('title');if(t)el.dataset.tip=t}
+ return el.dataset.tip||'';
+}
+function showTip(el){
+ const t=tipText(el);if(!t){tipEl.hidden=true;return}
+ tipEl.textContent=t;tipEl.hidden=false;
+ const r=el.getBoundingClientRect(),w=tipEl.offsetWidth,h=tipEl.offsetHeight;
+ let x=r.left+r.width/2-w/2,y=r.bottom+8;
+ if(y+h>innerHeight-6)y=r.top-h-8;
+ if(el.closest('#tools'))x=r.right+10,y=r.top+r.height/2-h/2;
+ tipEl.style.left=clamp(x,6,innerWidth-w-6)+'px';tipEl.style.top=clamp(y,6,innerHeight-h-6)+'px';
+}
+document.addEventListener('mouseover',e=>{
+ const el=e.target.closest&&e.target.closest('[data-tip],[title]');
+ if(el===tipFor)return;
+ tipFor=el;clearTimeout(tipT);tipEl.hidden=true;
+ if(!el||el.id==='cv'||el.closest('dialog'))return;
+ tipT=setTimeout(()=>showTip(el),el.classList.contains('q')?60:450);
+});
+document.addEventListener('pointerdown',()=>{clearTimeout(tipT);tipEl.hidden=true});
+document.addEventListener('scroll',()=>{tipEl.hidden=true},true);
+/* círculos ? en el panel */
+const SEC_TIP={
+ estilo:'El color y el grosor de lo que vas a dibujar. Si antes has elegido algo con "Elegir", aquí cambias el color y el grosor de eso.',
+ sel:'Lo que puedes hacer con lo que tienes elegido (en azul): copiarlo, darle la vuelta, girarlo, borrarlo…',
+ rejilla:'Los puntitos grises donde van los alfileres. Aquí cambias cuántos hay y cómo están colocados.',
+ sim:'Para que lo que dibujas se copie solo alrededor del aro (mandalas) o en espejo.',
+ capas:'Como hojas transparentes puestas una encima de otra. Sirven para separar los puntos de los hilos. Si no las necesitas, no las toques.',
+ hilos:'Todos los colores que hay en el dibujo. Si cambias uno aquí, cambia en todo el dibujo de golpe.',
+ imagen:'Puedes poner debajo una foto o un escaneo de un patrón en papel, para calcarlo encima.',
+ motivos:'Dibujos pequeños que guardas para volver a usarlos en otros diseños (una flor, una araña…).',
+ vista:'Cómo se ve en la pantalla: plano como en Lace, o con aspecto de hilo de verdad. No cambia lo que se imprime.'
+};
+const ROW_TIP={
+ gN:'Cuántos alfileres hay en cada vuelta del círculo. Más número, más puntos juntos.',
+ gRings:'Cuántas vueltas (círculos) de alfileres tiene la rejilla. Más anillos, mandala más grande.',
+ gR0:'A qué distancia del centro empieza el primer círculo de alfileres.',
+ gProp:'Anillos iguales: todos los círculos a la misma distancia. Proporcional: se separan más hacia fuera, como en los picados redondos de verdad.',
+ gStag:'Los alfileres de un anillo quedan entre los del anillo de al lado, en diagonal, como en el torchon.',
+ gRatio:'Para hacer la rejilla ovalada en vez de redonda. 1 es redonda.',
+ gAng:'El ángulo de las diagonales. 45° es el torchon normal. 90° es una cuadrícula.',
+ gFmt:'Tamaños ya preparados. Luego puedes cambiar el ancho y el alto a mano.',
+ gCols:'Cuántos puntos de ancho y de alto tiene el patrón.',
+ gMaj:'Pone un punto más gordo cada 5 o 10, para contar más fácil.',
+ gSnap:'El imán hace que las líneas se peguen solas a los alfileres. Déjalo en "A los puntos".',
+ symSt:'Para que lo que dibujas en un lado salga también en el otro, como en un espejo.',
+ stC:'Pulsa el cuadrado para elegir cualquier color, o toca uno de los círculos de colores.',
+ stW:'Mueve la bolita para hacer la línea más fina o más gorda.',
+ stSw:'Cuánto se curva el abanico. 90 es un cuarto de círculo y 180 medio círculo.',
+ stDash:'Línea seguida, de puntitos o de rayitas.',
+ pvCenter:'Marcado: gira y voltea alrededor del centro del dibujo. Sin marcar: alrededor de lo que tienes elegido.',
+ autoSave:'Marcado: se guarda solo cada vez que cambias algo. No hace falta pulsar Guardar.'
+};
+function addTips(){
+ document.querySelectorAll('#panel summary').forEach(s=>{
+  const id=s.parentElement.dataset.sec;if(!SEC_TIP[id]||s.querySelector('.q'))return;
+  const q=document.createElement('span');q.className='q';q.textContent='?';q.dataset.tip=SEC_TIP[id];
+  q.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});
+  s.firstChild.after(q);
+ });
+ for(const id in ROW_TIP){
+  const el=document.getElementById(id);if(!el)continue;
+  const row=el.closest('.row'),lab=row?row.querySelector('label'):el.closest('label');
+  if(!lab||lab.querySelector('.q'))continue;
+  const q=document.createElement('span');q.className='q';q.textContent='?';q.dataset.tip=ROW_TIP[id];
+  q.addEventListener('click',e=>{e.preventDefault();e.stopPropagation()});
+  lab.appendChild(q);
+ }
+ const sb={sDup:'Hace una copia al lado.',sCopy:'Lo guarda para pegarlo luego con Ctrl+V (también en otra pestaña).',sCut:'Lo quita y lo guarda para pegarlo en otro sitio.',sDel:'Lo borra. Si te equivocas, pulsa la flecha ↶.',
+  sFx:'Le da la vuelta de izquierda a derecha.',sFy:'Le da la vuelta de arriba a abajo.',sCx:'Hace una copia dada la vuelta de izquierda a derecha.',sCy:'Hace una copia dada la vuelta de arriba a abajo.',
+  sR90:'Lo gira un cuarto de vuelta.',sRm90:'Lo gira un cuarto de vuelta hacia el otro lado.',sR45:'Lo gira un octavo de vuelta.',sRa:'Lo gira los grados que tú escribas.',
+  sRstep:'Lo gira hasta el radio de al lado.',sRep:'Hace copias alrededor del centro, las que tú digas (8, 16…).',
+  sDots:'Cambia la línea por alfileres, uno en cada punto por donde pasa.',sDotsK:'Pone alfileres por donde pasa la línea y deja la línea.',
+  sFillIn:'Llena de alfileres todo lo que hay dentro del círculo elegido.',sBake:'Convierte las copias de alrededor en dibujos sueltos, para moverlos uno a uno.',
+  sGrp:'Junta lo elegido para que se mueva todo a la vez.',sUngrp:'Separa lo que estaba junto.',sMotif:'Lo guarda en Motivos para usarlo en otros diseños.',
+  gFillAll:'Pone un alfiler en todos los puntos de la rejilla.',lAdd:'Añade otra capa encima.',iLoad:'Elige una foto o escaneo de tu ordenador.',iMove:'Pulsa y arrastra la foto para colocarla.'};
+ for(const id in sb){const b=document.getElementById(id);if(b&&!b.dataset.tip)b.dataset.tip=sb[id]}
+}
+
+/* =================== guía fácil paso a paso =================== */
+const btnLook=t=>`<span class="look">${t}</span>`;
+const GUIDE=[
+ {t:'Bienvenido',x:`Este programa es como tu papel de picado, pero en el ordenador.<br><br>Los <b>puntitos grises</b> son los sitios de los alfileres.<br><br>Te enseño lo básico en unos pocos pasos. Puedes volver aquí cuando quieras con el botón ${btnLook('? Cómo funciona')} de arriba.`,sel:'#bGuide',ill:'dots'},
+ {t:'Empezar un diseño nuevo',x:`Arriba tienes <b>pestañas</b>, como carpetas. Cada una es un diseño.<br><br>Pulsa ${btnLook('+ Nuevo')} y elige <b>Mandala</b> (redondo) o <b>Torchon</b> o <b>Cuadrado</b> (por puntos).`,sel:'#tabs>button'},
+ {t:'Elegir con qué dibujar',x:`A la izquierda están las <b>herramientas</b>. Pulsa una y se queda marcada en verde.<br><br>Las que más usarás: <b>Punto</b>, <b>Gimp recto</b>, <b>Abanico</b> y <b>Círculo</b>.`,sel:'#tools'},
+ {t:'Dibujar',x:`Pon el ratón sobre un punto, <b>aprieta el botón izquierdo</b>, arrastra hasta otro punto y <b>suelta</b>.<br><br>La línea se pega sola a los alfileres. No hace falta apuntar con precisión.`,sel:'#stage',ill:'draw'},
+ {t:'¿Te has equivocado?',x:`No pasa nada. Pulsa la flecha ${btnLook('↶')} para deshacer. Puedes pulsarla <b>muchas veces</b>, y va quitando lo último que hiciste.<br><br>La flecha ${btnLook('↷')} lo vuelve a poner.`,sel:'#undobar'},
+ {t:'Cambiar o borrar algo',x:`Pulsa ${btnLook('Elegir')} (arriba a la izquierda) y luego toca lo que quieras cambiar. Se pone <b>azul</b>.<br><br>Ahora puedes arrastrarlo para moverlo, cambiarle el color a la derecha, o borrarlo con la tecla <b>Supr</b>.`,sel:'#t_select'},
+ {t:'Mandalas: repetir alrededor del aro',x:`Normalmente cada línea se dibuja una sola vez.<br><br>Si quieres que se copie sola alrededor del aro, marca a la derecha la casilla <b>Repetir lo que dibujo alrededor del aro</b> y elige cuántas veces: 4, 8, 16, 32…`,sel:'details[data-sec=sim]'},
+ {t:'Ver más cerca o más lejos',x:`Gira la <b>rueda del ratón</b> para acercar o alejar.<br><br>También tienes los botones ${btnLook('−')} y ${btnLook('+')} abajo a la derecha. ${btnLook('Ajustar')} te enseña el dibujo entero.`,sel:'#zoombar'},
+ {t:'Guardar y abrir',x:`<b>No tienes que hacer nada para guardar</b>: se guarda solo mientras esté marcada la casilla <b>Autoguardado</b>.<br><br>Para ver tus diseños de Lace 2000 pulsa ${btnLook('Abrir')} y elige el archivo, o la carpeta entera para verlos todos en pequeño.`,sel:'#bOpen'},
+ {t:'Imprimir el picado',x:`Pulsa ${btnLook('Imprimir A4')} y escribe la <b>distancia entre alfileres</b> en milímetros.<br><br>En la ventana de la impresora pon la escala al <b>100 %</b>. Luego mide con una regla la rayita de <b>5 cm</b> que sale en la hoja: si mide 5 cm, está bien.`,sel:'#bPrint'},
+ {t:'Si tienes dudas',x:`Deja el ratón <b>quieto encima de cualquier botón</b> o de los círculos <span class="q" style="cursor:default">?</span> y aparece una explicación.<br><br>¡Ya está! A disfrutar diseñando.`,sel:null}
+];
+let gStep=0;
+function guideIll(k){
+ if(k==='dots'){let s='<svg viewBox="0 0 220 110" width="220" height="110">';for(let i=0;i<11;i++)for(let j=0;j<5;j++)if((i+j)%2===0)s+=`<circle cx="${10+i*20}" cy="${15+j*20}" r="3" fill="#777"/>`;return s+'</svg>'}
+ if(k==='draw'){let s='<svg viewBox="0 0 220 110" width="220" height="110">';for(let i=0;i<11;i++)for(let j=0;j<5;j++)if((i+j)%2===0)s+=`<circle cx="${10+i*20}" cy="${15+j*20}" r="3" fill="#999"/>`;
+  return s+'<line x1="50" y1="15" x2="150" y2="95" stroke="#d62839" stroke-width="5" stroke-linecap="round"/><circle cx="50" cy="15" r="7" fill="none" stroke="#0891b2" stroke-width="2"/><path d="M150 95l14 6-5 2 4 7-3 2-4-7-4 4z" fill="#111" stroke="#fff" stroke-width="1"/><text x="40" y="10" font-size="11" fill="#0f766e" font-family="Segoe UI,Arial">aprieta</text><text x="160" y="90" font-size="11" fill="#0f766e" font-family="Segoe UI,Arial">suelta</text></svg>'}
+ return'';
+}
+function renderGuide(){
+ const d=$('#dlgGuide'),s=GUIDE[gStep],last=gStep===GUIDE.length-1;
+ d.innerHTML=`<div class="gstep">Paso ${gStep+1} de ${GUIDE.length}</div><h2>${s.t}</h2>
+ ${s.ill?`<div style="text-align:center;margin:6px 0 12px">${guideIll(s.ill)}</div>`:''}
+ <div class="gtext">${s.x}</div>
+ ${last?'<p><button class="glink" id="gFull">Ver todas las funciones y los atajos de teclado</button></p>':''}
+ <div class="gdots">${GUIDE.map((_,i)=>`<i class="${i===gStep?'on':''}" data-g="${i}"></i>`).join('')}</div>
+ <div class="gbtns">
+  <button id="gPrev" ${gStep?'':'disabled'}>← Anterior</button>
+  ${s.sel?'<button id="gPoint">Enséñame dónde está</button>':''}
+  <span style="flex:1"></span>
+  <button id="gClose">Cerrar</button>
+  <button id="gNext" class="on">${last?'Terminar':'Siguiente →'}</button>
+ </div>`;
+ $('#gPrev').onclick=()=>{gStep=Math.max(0,gStep-1);renderGuide()};
+ $('#gNext').onclick=()=>{if(last)d.close();else{gStep++;renderGuide()}};
+ $('#gClose').onclick=()=>d.close();
+ if(last)$('#gFull').onclick=()=>{d.close();openHelp()};
+ d.querySelectorAll('[data-g]').forEach(i=>i.onclick=()=>{gStep=+i.dataset.g;renderGuide()});
+ if(s.sel)$('#gPoint').onclick=()=>{d.close();pointAt(s.sel)};
+}
+function openGuide(step){gStep=step||0;renderGuide();const d=$('#dlgGuide');if(!d.open)d.showModal()}
+/* resalta un elemento de la pantalla durante unos segundos */
+function pointAt(selector){
+ if(selector.startsWith('details[data-sec')){const dd=document.querySelector(selector);if(dd){OPEN[dd.dataset.sec]=true;dd.open=true;dd.scrollIntoView({block:'center'})}}
+ const el=document.querySelector(selector);if(!el)return;
+ const r=el.getBoundingClientRect(),m=document.createElement('div');m.className='pointer';
+ m.style.left=r.left-6+'px';m.style.top=r.top-6+'px';m.style.width=r.width+12+'px';m.style.height=r.height+12+'px';
+ const back=document.createElement('button');back.className='gback';back.textContent='← Volver a la guía';
+ back.onclick=()=>{m.remove();back.remove();openGuide(gStep)};
+ document.body.append(m,back);
+ setTimeout(()=>{m.remove()},4500);setTimeout(()=>back.remove(),12000);
+}
+$('#bGuide').onclick=()=>openGuide(0);
+
 /* =================== guardado automático (IndexedDB) =================== */
 const idb={
  db:null,
@@ -1586,7 +1747,7 @@ function showSaved(){
  if(D.needPerm&&h){el.textContent='Pulsa Guardar para seguir guardando en '+h.name;el.classList.add('warn');return}
  if(dirty&&!settings.autosave){el.textContent='Cambios sin guardar';el.classList.add('warn');return}
  if(!lastSaved){el.textContent='';return}
- el.textContent=(settings.autosave?'Guardado automáticamente ':'Guardado ')+hhmm(lastSaved)+(h?' en '+h.name:'');
+ el.textContent='Guardado '+hhmm(lastSaved)+(h?' en '+h.name:'');
 }
 function save(){
  dirty=true;if(D)D.fileDirty=true;
@@ -1977,7 +2138,6 @@ $('#bExport').onclick=()=>showMenu($('#bExport'),[['Imagen PNG',()=>exportPNG(fa
 $('#bClear').onclick=()=>showMenu($('#bClear'),[
  ['Borrar el dibujo de esta pestaña',()=>{if(D.els.length&&confirm(`¿Borrar todo el dibujo de «${D.name}»? Se puede deshacer.`)){pushUndo();D.els=[];sel.clear();changed(true)}}],
  ['Cerrar todas las pestañas y empezar de cero',()=>{if(confirm('¿Borrar TODOS los diseños y empezar de cero? No se puede deshacer.')){docs=[];D=null;docSeq=0;startFresh()}}]]);
-$('#bHelp').onclick=openHelp;
 $('#zIn').onclick=()=>zoomAt(W/2,H/2,1.25);$('#zOut').onclick=()=>zoomAt(W/2,H/2,.8);$('#zFit').onclick=fit;
 $('#zPct').onclick=()=>zoomAt(W/2,H/2,(gridScale100())/D.view.zoom);
 $('#fEnd').onclick=()=>finishPath(false);$('#fClose').onclick=()=>finishPath(true);$('#fCancel').onclick=cancelDraw;
@@ -2004,8 +2164,8 @@ async function boot(){
  // programa instalado: abrir archivos con doble clic desde Windows
  if('launchQueue' in window)window.launchQueue.setConsumer(async p=>{if(p.files&&p.files.length){const fs=await Promise.all(p.files.map(h=>h.getFile()));openFiles(fs)}});
  if('serviceWorker' in navigator&&location.protocol==='https:')navigator.serviceWorker.register('sw.js').catch(()=>{});
- let seen=false;try{seen=localStorage.getItem('bolillos-ayuda2')==='1';localStorage.setItem('bolillos-ayuda2','1')}catch(e){}
- if(!seen)setTimeout(openHelp,300);
+ let seen=false;try{seen=localStorage.getItem('bolillos-guia1')==='1';localStorage.setItem('bolillos-guia1','1')}catch(e){}
+ if(!seen)setTimeout(()=>openGuide(0),300);
 }
 let installEv=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEv=e;$('#bInstall').hidden=false});
